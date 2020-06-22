@@ -9,7 +9,7 @@ def create_payment_session(order_id, amount):
 		'Key': 'Merchant',
 		'Data':
 			f'SessionType=Pay;OrderId={order_id};Amount={amount};'
-			f'Product=Ticket;Total={amount/100};Phone=79156783333;Description=MyTestTransaction;'
+			f'Product=Ticket;Total={amount / 100};Phone=79156783333;Description=MyTestTransaction;'
 			'Url=https://payture.com/result?orderid={orderid}&result={success};'
 			'AdditionalField1=Value1;AdditionalField2=Value2'
 	}
@@ -80,20 +80,17 @@ class TestPayture:
 		assert 'State="Authorized"' in state_response.text
 
 	def test_charge_payment_block(self):
-		order_id = int(time.time()) + 1
-		create_payment_session(order_id, self.amount)
-		block_response = block_payment_session(order_id, self.key, self.amount)
-		assert block_response.status_code == 200
-		assert 'Success="True"' in block_response.text
-		charge_response = charge_payment_session(order_id, self.key)
-		assert charge_response.status_code == 200
-		assert 'Success="True"' in charge_response.text
-		assert 'State="Charged"' in get_payment_state(order_id, self.key).text
-		dublicate_block_response = block_payment_session(order_id, self.key, self.amount)
-		assert dublicate_block_response.status_code == 200
-		assert 'Success="False" ErrCode="DUPLICATE_ORDER_ID"' in dublicate_block_response.text
+		"""
+		Проверка оплаты заблокированного платежа
+            1. Создать payment session
+			2. Перевести payment session в статус Charged
+			3. Заблокировать платеж в статусе Charged
+            Результат:
+            1. Статус код блокировки = 200
+            2. Success="False" в response блокировки
+            3. ErrCode="DUPLICATE_ORDER_ID"
+		 """
 
-	def test_unblock_payment_block(self):
 		order_id = int(time.time()) + 1
 		create_payment_session(order_id, self.amount)
 		block_response = block_payment_session(order_id, self.key, self.amount)
